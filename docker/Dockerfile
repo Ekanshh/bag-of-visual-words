@@ -27,3 +27,5 @@ RUN git clone --depth 1 https://github.com/catchorg/Catch2.git \
   && mkdir build && cd build \
   && cmake -DBUILD_TESTING=OFF .. && make -j all install
 
+# Cleanup
+RUN rm -rf /googletest/ /Catch2 /fmt/
