@@ -83,7 +83,7 @@ def get_student_names():
     print("Enter first author name and surname:")
     author_1 = input().title()
 
-    print("Enter first author name and surname(or press [ENTER] to skip):")
+    print("Enter second author name and surname(or press [ENTER] to skip):")
     author_2 = input().title()
 
     return author_1, author_2
