@@ -9,6 +9,10 @@ CMD ["bash"]
 ENV TERM xterm
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Use LLVM(clang) toolchain instead of GCC
+RUN update-alternatives --set cc /usr/bin/clang
+RUN update-alternatives --set c++ /usr/bin/clang++
+
 # Install fmt library
 RUN git clone --depth 1 https://github.com/fmtlib/fmt.git -b 6.2.0 \
   && cd fmt \
