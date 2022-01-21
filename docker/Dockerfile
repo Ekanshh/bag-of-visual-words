@@ -26,7 +26,7 @@ RUN git clone --depth 1 https://github.com/google/googletest.git  \
   && cmake .. && make -j all install
 
 # Install Catch2
-RUN git clone --depth 1 https://github.com/catchorg/Catch2.git \
+RUN git clone --depth 1 https://github.com/catchorg/Catch2.git -b v2.13.2 \
   && cd Catch2 \
   && mkdir build && cd build \
   && cmake -DBUILD_TESTING=OFF .. && make -j all install
