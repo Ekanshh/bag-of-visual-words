@@ -33,6 +33,7 @@ find_package(GTest REQUIRED)
 
 # Set additional flags.
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
@@ -57,5 +58,9 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
 
 # After all are setup is done, we can go to our src/ directory to build our
 # files
-add_subdirectory(src)
-add_subdirectory(tests)
+# add_subdirectory(src)
+# add_subdirectory(tests)
+
+# 
+add_subdirectory(core)
+add_subdirectory(interface)

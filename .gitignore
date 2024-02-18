@@ -184,3 +184,6 @@ dmypy.json
 .history
 
 # End of https://www.gitignore.io/api/c++,cmake,python,opencv,visualstudiocode
+
+dataset
+log
