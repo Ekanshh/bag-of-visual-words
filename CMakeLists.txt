@@ -31,6 +31,9 @@ endif(OpenCV_FOUND)
 enable_testing()
 find_package(GTest REQUIRED)
 
+# Find Eigen package
+find_package(Eigen3 REQUIRED)
+
 # Set additional flags.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,9 +44,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Code Coverage, clang-format, clan=tidy, cppcheck, Configuration:
-include(TestCoverage)
-include(ClangFormat)
-include(StaticAnalyzers)
+# include(TestCoverage)
+# include(ClangFormat)
+# include(StaticAnalyzers)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/lib/)
@@ -56,11 +59,7 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/results)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/)
 
-# After all are setup is done, we can go to our src/ directory to build our
-# files
-# add_subdirectory(src)
-# add_subdirectory(tests)
-
-# 
+# Add subdirectories
 add_subdirectory(core)
 add_subdirectory(interface)
+add_subdirectory(src)
