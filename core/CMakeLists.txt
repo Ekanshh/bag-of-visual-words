@@ -37,3 +37,10 @@ add_library(histogram STATIC
 )
 target_link_libraries(histogram 
     PUBLIC bow_dictionary)
+
+# metrics 
+add_library(metrics STATIC
+    metrics.cpp
+)
+target_link_libraries(metrics 
+    PUBLIC histogram)
