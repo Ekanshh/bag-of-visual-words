@@ -3,6 +3,7 @@
 #include "histogram.hpp"
 
 #include <fstream>
+#include <vector>
 
 namespace ipb {
 
@@ -80,54 +81,18 @@ std::vector<int>::const_iterator Histogram::cend() const { return data_.cend(); 
 
 std::vector<int> Histogram::data() const { return data_; }
 
-// TFIDFHistogram
-TFIDFHistogram::TFIDFHistogram(const Histogram& histogram, const std::vector<Histogram>& histograms)
-    : Histogram(histogram), histograms_(histograms) {
-    computeTFIDF();
-}
+std::vector<double> Histogram::ComputeTF() const {
+    std::vector<double> tf_values;
+    tf_values.reserve(data_.size());
 
-void TFIDFHistogram::computeTFIDF() {
-    tfidf_.resize(size(), 0.0);
-    const std::size_t n_histograms = histograms_.size();
+    auto total_terms = static_cast<double>(data_.size());
 
-    std::vector<std::size_t> documentsWithTerm(size(), 0);
-
-    // Calculate document frequency (DF) for each term
-    for (std::size_t i = 0; i < size(); ++i) {
-        for (const auto& histogram : histograms_) {
-            if (histogram[i] > 0) {
-                documentsWithTerm[i]++;
-            }
-        }
+    for (const auto& term_count : data_) {
+        auto tf = term_count / total_terms;
+        tf_values.push_back(tf);
     }
 
-    // Calculate TF-IDF values
-    for (std::size_t i = 0; i < size(); ++i) {
-        // Calculate term frequency (TF)
-        const double termFrequency =
-                static_cast<double>((*this)[i]) / static_cast<double>(totalWords());
-        // Calculate inverse document frequency (IDF)
-        const double inverseDocumentFrequency = std::log(
-                static_cast<double>(n_histograms) / static_cast<double>(1 + documentsWithTerm[i]));
-        tfidf_[i] = termFrequency * inverseDocumentFrequency;
-    }
-}
-
-void TFIDFHistogram::WriteToCSV(const std::string& filename) const {
-    std::ofstream file(filename);
-    for (auto it = tfidf_.cbegin(); it != tfidf_.cend(); ++it) {
-        file << *it;
-        if (std::next(it) != tfidf_.cend()) {  // Check if it's not the last element
-            file << ',';                       // Add comma if it's not the last element
-        }
-    }
-    file << '\n';  // Add newline at the end of each line
-    file.close();
-}
-
-void TFIDFHistogram::set_histograms(const std::vector<Histogram>& histograms) {
-    histograms_ = histograms;
-    computeTFIDF();
+    return tf_values;
 }
 
 }  // namespace ipb

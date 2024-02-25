@@ -37,39 +37,10 @@ public:
 
     std::vector<int> data() const;
 
+    std::vector<double> ComputeTF() const;
+
 private:
     std::vector<int> data_ = {};
 };
 
-class TFIDFHistogram : public Histogram {
-public:
-    using Histogram::Histogram;
-
-    TFIDFHistogram() = default;
-    TFIDFHistogram(const Histogram& histogram, const std::vector<Histogram>& histograms);
-    TFIDFHistogram(const TFIDFHistogram&) = default;
-    TFIDFHistogram(TFIDFHistogram&&) = default;
-    TFIDFHistogram& operator=(const TFIDFHistogram&) = default;
-    TFIDFHistogram& operator=(TFIDFHistogram&&) = default;
-    ~TFIDFHistogram() = default;
-
-    void computeTFIDF();
-    void WriteToCSV(const std::string& filename) const;
-
-    void set_histograms(const std::vector<Histogram>& histograms);
-    const std::vector<Histogram>& histograms() const;
-    std::vector<Histogram>& histograms();
-    const double& tfidf(std::size_t index);
-
-private:
-    std::vector<Histogram> histograms_;
-    std::vector<double> tfidf_;
-    std::size_t totalWords() const {
-        std::size_t total = 0;
-        for (const auto& histogram : histograms_) {
-            total += histogram.size();
-        }
-        return total;
-    }
-};
 }  // namespace ipb

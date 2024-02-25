@@ -1,6 +1,9 @@
 #include "bow_dictionary.hpp"
 
 #include <algorithm>
+#include <iostream>
+#include <opencv2/features2d.hpp>
+#include <vector>
 
 namespace ipb {
 
@@ -24,12 +27,34 @@ BowDictionary &BowDictionary::GetInstance() {
     static BowDictionary instance;
     return instance;
 }
-
 void BowDictionary::build(int max_iterations,
                           std::size_t size,
                           const std::vector<cv::Mat> &descriptors) {
     auto vocabulary = kMeans(descriptors, static_cast<int>(size), max_iterations);
     set_vocabulary(vocabulary);
+    auto idf = ComputeIDF(descriptors);
+    set_idf(idf);  // Assuming there's a method to set IDF values in the class
+}
+
+std::vector<float> BowDictionary::ComputeIDF(const std::vector<cv::Mat> &descriptors) {
+    std::vector<float> idf(vocabulary_.rows, 0);
+    for (const auto &desc : descriptors) {
+        auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
+        std::vector<std::vector<cv::DMatch>> knn_matches;
+        matcher->knnMatch(desc, vocabulary_, knn_matches, 1);
+
+        for (const auto &match : knn_matches) {
+            if (!match.empty()) {
+                idf[match[0].trainIdx]++;
+            }
+        }
+    }
+
+    for (float &val : idf) {
+        val = std::log(static_cast<float>(descriptors.size()) / (val));
+    }
+
+    return idf;
 }
 
 void BowDictionary::set_vocabulary(const cv::Mat &vocabulary) { vocabulary_ = vocabulary.clone(); }
