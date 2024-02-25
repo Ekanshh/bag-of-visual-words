@@ -2,7 +2,9 @@
 
 #include "histogram.hpp"
 
+#include <algorithm>
 #include <fstream>
+#include <numeric>
 #include <vector>
 
 namespace ipb {
@@ -27,15 +29,9 @@ Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary
     }
 
     set_data(histogram);
-    auto tf = ComputeTF();
-    set_tf(tf);
 }
 
-Histogram::Histogram(const std::vector<int>& data) {
-    set_data(data);
-    auto tf = ComputeTF();
-    set_tf(tf);
-}
+Histogram::Histogram(const std::vector<int>& data) { set_data(data); }
 
 std::ostream& operator<<(std::ostream& os, const Histogram& histogram) {
     for (const auto& bin : histogram.data_) {
@@ -45,7 +41,16 @@ std::ostream& operator<<(std::ostream& os, const Histogram& histogram) {
 }
 
 void Histogram::WriteToCSV(const std::string& filename) const {
+    std::filesystem::path directory = std::filesystem::path(filename).parent_path();
+    if (!std::filesystem::exists(directory)) {
+        std::filesystem::create_directories(directory);
+    }
+
     std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file for writing: " + filename);
+    }
+
     for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
         file << *it;
         if (std::next(it) != data_.cend()) {  // Check if it's not the last element
@@ -91,71 +96,56 @@ std::vector<int>::const_iterator Histogram::cend() const { return data_.cend(); 
 std::vector<int> Histogram::data() const { return data_; }
 void Histogram::set_data(const std::vector<int>& data) { data_ = data; }
 
-std::vector<double> Histogram::tf() const { return tf_; }
-void Histogram::set_tf(const std::vector<double>& tf) { tf_ = tf; }
-
-std::vector<double> Histogram::ComputeTF() const {
-    std::vector<double> tf_values;
-    tf_values.reserve(data_.size());
-
-    auto total_terms = static_cast<double>(data_.size());
-
-    for (const auto& term_count : data_) {
-        auto tf = term_count / total_terms;
-        tf_values.push_back(tf);
-    }
-
-    return tf_values;
-}
-
 // TFIDFHistogram
-
-TFIDFHistogram::TFIDFHistogram(const Histogram& histogram, const BowDictionary& dictionary) {
-    auto data = histogram.data();
-    auto tf = histogram.tf();
-    auto idf = dictionary.idf();
-
-    std::vector<double> tfidf;
-    tfidf.reserve(data.size());
-    for (std::size_t i = 0; i < data.size(); ++i) {
-        tfidf.push_back(tf[i] * idf[i]);
+TFIDFHistogram::TFIDFHistogram(const std::vector<double>& data) { set_data(data); }
+std::vector<double> TFIDFHistogram::data() const { return data_; }
+void TFIDFHistogram::set_data(const std::vector<double>& data) { data_ = data; }
+void TFIDFHistogram::WriteToCSV(const std::string& filename) const {
+    std::filesystem::path directory = std::filesystem::path(filename).parent_path();
+    if (!std::filesystem::exists(directory)) {
+        std::filesystem::create_directories(directory);
     }
 
-    set_tfidf(tfidf);
-}
-
-void TFIDFHistogram::WriteToCSV(const std::string& filename) const {
     std::ofstream file(filename);
-    for (auto it = tfidf_.cbegin(); it != tfidf_.cend(); ++it) {
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file for writing: " + filename);
+    }
+
+    for (auto it = data_.cbegin(); it != data_.cend(); ++it) {
         file << *it;
-        if (std::next(it) != tfidf_.cend()) {  // Check if it's not the last element
-            file << ',';                       // Add comma if it's not the last element
+        if (std::next(it) != data_.cend()) {  // Check if it's not the last element
+            file << ',';                      // Add comma if it's not the last element
         }
     }
     file.close();
 }
+std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms) {
+    const std::size_t N = histograms.size();
 
-TFIDFHistogram TFIDFHistogram::ReadFromCSV(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return {};
-    }
-
-    std::string line;
-    std::vector<double> data;
-    while (!file.eof()) {
-        std::getline(file, line);
-        std::istringstream iss(line);
-        std::string token;
-        while (std::getline(iss, token, ',')) {
-            data.push_back(std::stod(token));
+    std::vector<int> document_frequency(histograms[0].size(), 0);
+    for (const auto& histogram : histograms) {
+        for (std::size_t i = 0; i < histogram.size(); ++i) {
+            if (histogram[i] > 0) {
+                document_frequency[i]++;
+            }
         }
     }
-    return TFIDFHistogram(data);
-}
 
-const std::vector<double>& TFIDFHistogram::tfidf() const { return tfidf_; }
-void TFIDFHistogram::set_tfidf(const std::vector<double>& tfidf) { tfidf_ = tfidf; }
+    std::vector<TFIDFHistogram> tfidf_histograms;
+    for (const auto& histogram : histograms) {
+        TFIDFHistogram tfidf_histogram;
+        std::vector<double> tfidf(histogram.size(), 0);
+        double total_terms = std::accumulate(histogram.begin(), histogram.end(), 0);
+        for (std::size_t i = 0; i < histogram.size(); ++i) {
+            double tf = static_cast<double>(histogram[i]) / total_terms;
+            double idf = std::log(static_cast<double>(N) / document_frequency[i]);
+            tfidf[i] = tf * idf;
+        }
+        tfidf_histogram.set_data(tfidf);
+        tfidf_histograms.push_back(tfidf_histogram);
+    }
+
+    return tfidf_histograms;
+}
 
 }  // namespace ipb

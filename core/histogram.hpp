@@ -38,35 +38,30 @@ public:
     std::vector<int> data() const;
     void set_data(const std::vector<int>& data);
 
-    std::vector<double> tf() const;
-    void set_tf(const std::vector<double>& tf);
-    std::vector<double> ComputeTF() const;
-
 private:
     std::vector<int> data_ = {};
-    std::vector<double> tf_ = {};
 };
 
-class TFIDFHistogram : public Histogram {
+class TFIDFHistogram {
 public:
     TFIDFHistogram() = default;
-    explicit TFIDFHistogram(const std::vector<double>& tfidf) : tfidf_(tfidf){};
-    TFIDFHistogram(const Histogram& histogram, const BowDictionary& dictionary);
+    explicit TFIDFHistogram(const std::vector<double>& data);
     TFIDFHistogram(const TFIDFHistogram&) = default;
     TFIDFHistogram(TFIDFHistogram&&) = default;
     TFIDFHistogram& operator=(const TFIDFHistogram&) = default;
     TFIDFHistogram& operator=(TFIDFHistogram&&) = default;
     ~TFIDFHistogram() = default;
 
-    void WriteToCSV(const std::string& filename) const;
-    static TFIDFHistogram ReadFromCSV(const std::string& filename);
+    std::vector<double> data() const;
+    void set_data(const std::vector<double>& data);
 
-    [[nodiscard]] const std::vector<double>& tfidf() const;
-    void set_tfidf(const std::vector<double>& tfidf);
-    std::vector<double> ComputeTFIDF(const BowDictionary& dictionary) const;
+    void WriteToCSV(const std::string& filename) const;
 
 private:
-    std::vector<double> tfidf_ = {};
+    std::vector<double> data_ = {};
 };
+
+// Compute Batch TF-IDF for a set of histograms
+std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms);
 
 }  // namespace ipb

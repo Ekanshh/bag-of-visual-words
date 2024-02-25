@@ -21,7 +21,6 @@ public:
     ~BowDictionary() = default;
 
     void build(int max_iterations, std::size_t size, const std::vector<cv::Mat> &descriptors);
-    std::vector<float> ComputeIDF(const std::vector<cv::Mat> &descriptors);
 
     void save(const std::string &filename) const;
     void load(const std::string &filename);
@@ -29,14 +28,10 @@ public:
     [[nodiscard]] const cv::Mat &vocabulary() const { return vocabulary_; }
     void set_vocabulary(const cv::Mat &vocabulary);
 
-    void set_idf(const std::vector<float> &idf) { idf_ = idf; }
-    [[nodiscard]] std::vector<float> idf() const { return idf_; }
-
     [[nodiscard]] std::size_t size() const;
     [[nodiscard]] bool empty() const;
 
 private:
     cv::Mat vocabulary_{};  // codebook
-    std::vector<float> idf_;
 };
 }  // namespace ipb
