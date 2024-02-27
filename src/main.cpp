@@ -4,23 +4,25 @@
 #include <iostream>
 
 int main() {
-    const std::filesystem::path& root = "../dataset/test/";
-    const std::filesystem::path& image_directory = root / "data";
+    const std::filesystem::path& root = "../dataset/";
+    const std::filesystem::path& image_directory = root / "images";
     const std::filesystem::path& bin_directory = root / "bin";
-    const std::filesystem::path& histogram_directory = root / "histograms_1000";
-    const std::filesystem::path& tfidf_histogram_directory = root / "tfidf_histograms_1000";
-    const std::filesystem::path& dictionary_path = root / "test_data_1000.yml";
+    const std::filesystem::path& histogram_directory = root / "histograms";
+    const std::filesystem::path& tfidf_histogram_directory = root / "tfidf_histograms";
+    const std::filesystem::path& dictionary_path = root / "dictionary.yml";
 
     // Convert the dataset to SIFT descriptors
     std::cout << "Converting dataset to SIFT descriptors.." << std::endl;
+    const std::filesystem::path& full_path = std::filesystem::current_path();
+    std::cout << "Current path: " << full_path << std::endl;
     ipb::serialization::sifts::ConvertDataset(image_directory);
     std::cout << "Converted dataset to SIFT descriptors." << std::endl;
 
     // Create the dictionary
     std::cout << "Creating dictionary.." << std::endl;
     const auto descriptors = ipb::serialization::sifts::LoadDataset(bin_directory);
-    const auto max_iterations = 50;
-    const auto num_words = 1000;
+    const auto max_iterations = 100;
+    const auto num_words = 50000;
     ipb::BowDictionary& dictionary = ipb::BowDictionary::GetInstance();
     dictionary.build(max_iterations, num_words, descriptors);
     dictionary.save(dictionary_path.string());
@@ -29,6 +31,7 @@ int main() {
     // Compute the histograms
     std::cout << "Computing histograms.." << std::endl;
     std::vector<ipb::Histogram> histograms;
+    std::vector<std::string> histogram_filenames;
     std::vector<ipb::TFIDFHistogram> tfidf_histograms;
     for (const auto& entry : std::filesystem::directory_iterator(image_directory)) {
         if (entry.path().extension() == ".png") {
@@ -42,39 +45,34 @@ int main() {
             ipb::Histogram histogram(des_descriptors, dictionary);
             histogram.WriteToCSV(histogram_directory / (image_path.stem().string() + ".csv"));
             histograms.push_back(histogram);
-
-            // Compute the TF-IDF histogram and write it to disk
-            ipb::TFIDFHistogram tfidf_histogram(histogram, dictionary);
-            tfidf_histogram.WriteToCSV(tfidf_histogram_directory /
-                                       (image_path.stem().string() + ".csv"));
-            tfidf_histograms.push_back(tfidf_histogram);
+            histogram_filenames.push_back(image_path.stem().string());
         }
     }
     std::cout << "Computed histograms." << std::endl;
 
-    // Metrics
-    // Cosine similarity
-    std::cout << "Computing metrics.." << std::endl;
-    std::cout << "Computing cosine similarity.." << std::endl;
-    auto histogram_cosinesim =
-            ipb::metrics::CosineSimilarity(histograms, true, root / "histogram_cosinesim.csv");
-    auto tfidf_histogram_cosinesim = ipb::metrics::CosineSimilarity(
-            tfidf_histograms, true, root / "tfidf_histogram_cosinesim.csv");
+    // Compute the TF-IDF histograms
+    std::cout << "Computing TF-IDF histograms.." << std::endl;
+    tfidf_histograms = ipb::BatchTFIDF(histograms);
 
-    // Euclidean distance
-    std::cout << "Computing euclidean distance.." << std::endl;
-    auto histogram_euclidean = ipb::metrics::NormalizedEuclideanDistance(
-            histograms, true, root / "histogram_euclidean.csv");
-    auto tfidf_histogram_euclidean = ipb::metrics::NormalizedEuclideanDistance(
-            tfidf_histograms, true, root / "tfidf_histogram_euclidean.csv");
+    for (std::size_t i = 0; i < tfidf_histograms.size(); ++i) {
+        tfidf_histograms[i].WriteToCSV(tfidf_histogram_directory /
+                                       (histogram_filenames[i] + ".csv"));
+    }
+
+    std::cout << "Computed TF-IDF histograms." << std::endl;
+
+    // Cosine Distance Metrics
+    std::cout << "Computing cosine distance.." << std::endl;
+    auto histogram_cosdist = ipb::metrics::BatchCosineDistance(histograms);
+    auto tfidf_histogram_cosdist = ipb::metrics::BatchCosineDistance(tfidf_histograms);
     std::cout << "Computed metrics." << std::endl;
 
     // Visualize the metrics
-    ipb::metrics::VisualizeMetrics(histogram_cosinesim, "Histogram Cosine Similarity");
-    ipb::metrics::VisualizeMetrics(tfidf_histogram_cosinesim, "TF-IDF Histogram Cosine Similarity");
-    ipb::metrics::VisualizeMetrics(histogram_euclidean, "Histogram Euclidean Distance");
-    ipb::metrics::VisualizeMetrics(tfidf_histogram_euclidean,
-                                   "TF-IDF Histogram Euclidean Distance");
+    ipb::metrics::VisualizeMetrics(histogram_cosdist, "Histogram Cosine Distance");
+    ipb::metrics::VisualizeMetrics(tfidf_histogram_cosdist, "TF-IDF Histogram Cosine Distance");
+    // Save the metrics to CSV
+    ipb::metrics::WriteMetricsToCSV(histogram_cosdist, root / "histogram_cosdist.csv");
+    ipb::metrics::WriteMetricsToCSV(tfidf_histogram_cosdist, root / "tfidf_histogram_cosdist.csv");
 
     return 0;
 }
