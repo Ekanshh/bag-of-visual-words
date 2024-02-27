@@ -1,81 +1,75 @@
-# C++ Final Project: "Place Recognition using Bag of Visual Words"
+## Bag of Visual Words (BOVW) C++ Project
 
-Welcome to the C++ Final Project template. Congratulations, if you are forking
-this repository it means that you've successfully completed a lot of homeworks
-during the semester.
+This C++ project implements the Bag of Visual Words (BOVW) algorithm for image retrieval. The project allows you to build a BOVW model using a dataset of images, and then perform image queries to retrieve similar images from the dataset.
 
-This project template, is, nothing but just a **template** and must used wisely.
-By no means you must stick to the project structure, you are **FREE** to do
-design how the project should be structured. Your best friend, the _hw_bot_
-won't be checking this repository, so you are now in charge of making everything
-work nice and smoothly.
+### Project Structure
 
-## How to start?
-
-Just fork this repository, the same way you did for the `cpp-homeworks`
-repository. I reccomend then spend a few minutes inspecting all the files to see
-what's in there, and then remove all the C++ modules/examples/tests and start
-from scratch.
-
-You should always remove this `README.md` and start working on your own.
-
-## Project Structure
+The project directory structure is organized as follows:
 
 ```
 .
-├── cmake         # Build configurations, like clang-tidy, clang-format, etc.
-├── docker        # A handy docker container has been already generated.
-├── include       # The final project include directory, to be exported.
-├── scripts       # Some script used by the CI/CD, you should check them.
-│   └── release   # All the information on how to make a release for submitting.
-├── src           # Source directory.
-│   ├── apps      # Here you could place your application(stuff with main() ).
-│   └── bow       # Here you can put the library sources.
-└── tests         # Here you MUST implement tests to test your code.
-
+├── api
+│   ├── html_writer.cpp
+│   ├── html_writer.hpp
+│   ├── image_browser.cpp
+│   └── image_browser.hpp
+├── bin
+│   ├── main
+│   └── query
+├── build
+├── core
+│   ├── bow_dictionary.cpp
+│   ├── bow_dictionary.hpp
+│   ├── convert_dataset.cpp
+│   ├── convert_dataset.hpp
+│   ├── histogram.cpp
+│   ├── histogram.hpp
+│   ├── metrics.cpp
+│   ├── metrics.hpp
+│   ├── mykmeans.cpp
+│   ├── mykmeans.hpp
+│   ├── serialize.cpp
+│   └── serialize.hpp
+├── dataset
+│   ├── images
+│   └── query
+├── interface
+│   └── bovw.h
+└── src
+    ├── main.cpp
+    └── query.cpp
 ```
 
-## Utilities
+### Usage
 
-The build system provides 3 handy targets to help you develop your final project
+1. **Dataset Directory**: Store the image dataset in the `dataset/images` directory. Place query images in the `dataset/query` directory.
 
-- `make clang-format` will check the style of your code. **NOTE:** You can
-  adapt the [.clang-format](./.clang-format) file to fit your needs.
-- `make clang-tidy` will run `clang-tidy` on your project. **NOTE:** You can
-  adapt the [.clang-tidy](./.clang-tidy) file to fit your needs.
-- `make test-coverage` will report how much do you cover from your project in
-  the tests. This will generate an `HTML` report you could open on any modern
-  browser and see what are you missing to cover: `xdg-open build/coverage/index.html`
+2. **Building the Project**: Build the project using the provided CMakeLists.txt file. Navigate to the build directory and execute:
 
-## CI/CD
+   ```bash
+   cmake ..
+   make
+   ```
 
-The CI/CD is your friend, you get to change/add/disable any functionality, you
-are FREE to design your final project. I just place in this template what would
-be the bare-minimum to start working with. This basically replace the hw_bow but
-you have now ALL the control over each process. Make sure you allow some time to
-play around in the `pipelines` tab and inspect each `stage` of the pipeline.
+3. **Executing the Query**: After building the project, navigate to the `bin` directory:
 
-Changes to the CI/CD are done through the [.gitlab-ci.yml](./..gitlab-ci.yml)
-configuration file.
+   ```bash
+   cd bin
+   ```
 
-## Docker
+   Run the query executable:
 
-There is docker image provided by this template, you are also free to change
-it/adapt it to your needs. All the information about this docker image is in the
-[Dockerfile](docker/Dockerfile) script. In your repository in the `packages` tab
-there are instructions on how to build/deploy new versions of the image. **Make
-sure** you update the [.gitlab-ci.yml](./..gitlab-ci.yml) with the new docker
-image if you plan to change it.
+   ```bash
+   ./query
+   ```
 
-## Release
+   Follow the prompts to enter the name of the query image file.
 
-You should check the [Release README](scripts/release/README.md) in order to
-make a project submission. Projects that skip this test will be **ignored**
+4. **Viewing Results**: The results of the image queries will be stored in the `dataset/query` directory.
 
-## Advice
+### Additional Notes
 
-Go wild! This is **YOUR** project, you can do whatever pleases you :) Spend as
-much time as you like on each module, improve others, change the CI/CD,
-disable/enable functionality, use the `Wiki`, do everything, go wild!!!
-
-Good luck!
+- The `api` directory contains HTML writer and image browser functionalities for generating HTML files to view the query results.
+- The `core` directory contains the core functionalities of the BOVW algorithm, including building the dictionary, converting datasets, computing histograms, and performing metrics calculations.
+- The `interface` directory contains the interface definition file `bovw.h`.
+- The `src` directory contains the main and query source files.
