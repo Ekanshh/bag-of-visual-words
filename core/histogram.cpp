@@ -10,16 +10,11 @@
 namespace ipb {
 
 Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary) {
-    auto vocabulary = dictionary.vocabulary();
-    auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
-
-    if (!matcher) {
-        std::cerr << "[Error] Unable to create descriptor matcher." << std::endl;
-        return;
-    }
+    const auto& vocabulary = dictionary.vocabulary();
+    cv::FlannBasedMatcher matcher;
 
     std::vector<std::vector<cv::DMatch>> knn_matches;
-    matcher->knnMatch(descriptors, vocabulary, knn_matches, 1);
+    matcher.knnMatch(descriptors, vocabulary, knn_matches, 1);
 
     std::vector<int> histogram(vocabulary.rows, 0);
     for (const auto& match : knn_matches) {
@@ -30,6 +25,29 @@ Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary
 
     set_data(histogram);
 }
+
+// Brute Force Matcher
+// Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary) {
+//     auto vocabulary = dictionary.vocabulary();
+//     auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
+
+//     if (!matcher) {
+//         std::cerr << "[Error] Unable to create descriptor matcher." << std::endl;
+//         return;
+//     }
+
+//     std::vector<std::vector<cv::DMatch>> knn_matches;
+//     matcher->knnMatch(descriptors, vocabulary, knn_matches, 1);
+
+//     std::vector<int> histogram(vocabulary.rows, 0);
+//     for (const auto& match : knn_matches) {
+//         if (!match.empty()) {
+//             histogram[match[0].trainIdx]++;
+//         }
+//     }
+
+//     set_data(histogram);
+// }
 
 Histogram::Histogram(const std::vector<int>& data) { set_data(data); }
 
@@ -100,8 +118,10 @@ void Histogram::set_data(const std::vector<int>& data) { data_ = data; }
 TFIDFHistogram::TFIDFHistogram(const std::vector<double>& data) { set_data(data); }
 std::vector<double> TFIDFHistogram::data() const { return data_; }
 void TFIDFHistogram::set_data(const std::vector<double>& data) { data_ = data; }
+
 void TFIDFHistogram::WriteToCSV(const std::string& filename) const {
     std::filesystem::path directory = std::filesystem::path(filename).parent_path();
+
     if (!std::filesystem::exists(directory)) {
         std::filesystem::create_directories(directory);
     }
@@ -119,6 +139,26 @@ void TFIDFHistogram::WriteToCSV(const std::string& filename) const {
     }
     file.close();
 }
+TFIDFHistogram TFIDFHistogram::ReadFromCSV(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return {};
+    }
+
+    std::string line;
+    std::vector<double> data;
+    while (!file.eof()) {
+        std::getline(file, line);
+        std::istringstream iss(line);
+        std::string token;
+        while (std::getline(iss, token, ',')) {
+            data.push_back(std::stod(token));
+        }
+    }
+    return TFIDFHistogram(data);
+}
+
 std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms) {
     const std::size_t N = histograms.size();
 
@@ -146,6 +186,32 @@ std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms)
     }
 
     return tfidf_histograms;
+}
+
+TFIDFHistogram QueryTFIDF(const Histogram& query_histogram,
+                          const std::vector<Histogram>& histograms) {
+    const std::size_t N = histograms.size();
+
+    std::vector<int> document_frequency(query_histogram.size(), 0);
+    for (const auto& histogram : histograms) {
+        for (std::size_t i = 0; i < histogram.size(); ++i) {
+            if (histogram[i] > 0) {
+                document_frequency[i]++;
+            }
+        }
+    }
+
+    TFIDFHistogram tfidf_histogram;
+    std::vector<double> tfidf(query_histogram.size(), 0);
+    double total_terms = std::accumulate(query_histogram.begin(), query_histogram.end(), 0);
+    for (std::size_t i = 0; i < query_histogram.size(); ++i) {
+        double tf = static_cast<double>(query_histogram[i]) / total_terms;
+        double idf = std::log(static_cast<double>(N) / document_frequency[i]);
+        tfidf[i] = tf * idf;
+    }
+    tfidf_histogram.set_data(tfidf);
+
+    return tfidf_histogram;
 }
 
 }  // namespace ipb

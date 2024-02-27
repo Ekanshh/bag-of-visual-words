@@ -56,6 +56,7 @@ public:
     void set_data(const std::vector<double>& data);
 
     void WriteToCSV(const std::string& filename) const;
+    static TFIDFHistogram ReadFromCSV(const std::string& filename);
 
 private:
     std::vector<double> data_ = {};
@@ -63,5 +64,8 @@ private:
 
 // Compute Batch TF-IDF for a set of histograms
 std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms);
+
+// Compute TF-IDF for a query histogram
+TFIDFHistogram QueryTFIDF(const Histogram& histogram, const std::vector<Histogram>& histograms);
 
 }  // namespace ipb
