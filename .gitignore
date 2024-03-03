@@ -189,3 +189,4 @@ dataset
 log
 .clang-tidy
 **.pdf
+setup/
