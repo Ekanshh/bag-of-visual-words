@@ -1,7 +1,6 @@
 #include "convert_dataset.hpp"
 
 #include <filesystem>
-#include <iostream>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/xfeatures2d.hpp>
 
@@ -9,8 +8,8 @@
 
 namespace ipb::serialization::sifts {
 
-void ConvertDataset(const std::filesystem::path& dataset_path) {
-    std::string bin_path = dataset_path.string() + "/../bin/";
+void ConvertDataset(const std::filesystem::path& dataset_path,
+                    const std::filesystem::path& bin_path) {
     if (!std::filesystem::exists(bin_path)) {
         std::filesystem::create_directory(bin_path);
     }
@@ -24,7 +23,7 @@ void ConvertDataset(const std::filesystem::path& dataset_path) {
             cv::Mat descriptors;
             detector->detectAndCompute(img, cv::noArray(), keypoints, descriptors);
 
-            std::string bin_img = bin_path + entry.path().stem().string() + ".bin";
+            std::string bin_img = bin_path / (entry.path().stem().string() + ".bin");
             ipb::serialization::Serialize(descriptors, bin_img);
         }
     }

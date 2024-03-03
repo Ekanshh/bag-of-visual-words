@@ -19,6 +19,9 @@ Checks: '*,
 -modernize-avoid-c-arrays,
 -readability-container-size-empty,
 -hicpp-avoid-goto,
+-bugprone-easily-swappable-parameters,
+-readability-identifier-length,
+readability-redundant-declaration,
 '
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.'

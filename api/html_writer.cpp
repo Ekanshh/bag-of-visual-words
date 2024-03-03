@@ -65,16 +65,9 @@ void AddImage(std::ofstream& file, const std::string& img_path, float score) {
         return;
     }
 
-    // if (score < 0.0 || score > 1.0) {
-    //     file << "[ERROR] Score " << score << " is not in the range [0, 1]";
-    //     return;
-    // }
-
-    // OpenColumn(file, highlight);
     file << R"(<h2>)" << filename << "</h2>\n";
     file << R"(<img src=")" << img_path << "\" />";
     file << R"(<p>score = )" << score << "</p>";
-    // CloseColumn(file);
 }
 
 }  // namespace bovw::api::html_writer

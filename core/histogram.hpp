@@ -66,6 +66,7 @@ private:
 std::vector<TFIDFHistogram> BatchTFIDF(const std::vector<Histogram>& histograms);
 
 // Compute TF-IDF for a query histogram
-TFIDFHistogram QueryTFIDF(const Histogram& histogram, const std::vector<Histogram>& histograms);
+TFIDFHistogram QueryTFIDF(const Histogram& query_histogram,
+                          const std::vector<Histogram>& histograms);
 
 }  // namespace ipb

@@ -30,10 +30,17 @@ else()
   message(FATAL_ERROR "OpenCV not found, please read the README.md")
 endif(OpenCV_FOUND)
 
+# Code Coverage, clang-format, clan=tidy, cppcheck, Configuration:
+include(TestCoverage)
+include(ClangFormat)
+include(StaticAnalyzers)
+
+
+# Create binaries inside result directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # Add subdirectories
-add_subdirectory(core)
 add_subdirectory(api)
+add_subdirectory(core)
 add_subdirectory(interface)
 add_subdirectory(src)

@@ -26,29 +26,6 @@ Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary
     set_data(histogram);
 }
 
-// Brute Force Matcher
-// Histogram::Histogram(const cv::Mat& descriptors, const BowDictionary& dictionary) {
-//     auto vocabulary = dictionary.vocabulary();
-//     auto matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE);
-
-//     if (!matcher) {
-//         std::cerr << "[Error] Unable to create descriptor matcher." << std::endl;
-//         return;
-//     }
-
-//     std::vector<std::vector<cv::DMatch>> knn_matches;
-//     matcher->knnMatch(descriptors, vocabulary, knn_matches, 1);
-
-//     std::vector<int> histogram(vocabulary.rows, 0);
-//     for (const auto& match : knn_matches) {
-//         if (!match.empty()) {
-//             histogram[match[0].trainIdx]++;
-//         }
-//     }
-
-//     set_data(histogram);
-// }
-
 Histogram::Histogram(const std::vector<int>& data) { set_data(data); }
 
 std::ostream& operator<<(std::ostream& os, const Histogram& histogram) {
