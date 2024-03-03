@@ -187,7 +187,5 @@ dmypy.json
 
 dataset
 log
-**.ipynb
 .clang-tidy
-debugging/**
-final_project.pdf
+**.pdf
