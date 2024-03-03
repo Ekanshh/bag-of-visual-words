@@ -8,6 +8,22 @@
 
 namespace ipb::serialization::sifts {
 
+void ConvertSingleImage(const std::filesystem::path& image_path,
+                        const std::filesystem::path& bin_path) {
+    if (!std::filesystem::exists(bin_path)) {
+        std::filesystem::create_directory(bin_path);
+    }
+
+    cv::Mat img = cv::imread(image_path.string(), cv::IMREAD_GRAYSCALE);
+    cv::Ptr<cv::SIFT> detector = cv::SIFT::create();
+    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat descriptors;
+    detector->detectAndCompute(img, cv::noArray(), keypoints, descriptors);
+
+    std::string bin_img = bin_path / (image_path.stem().string() + ".bin");
+    ipb::serialization::Serialize(descriptors, bin_img);
+}
+
 void ConvertDataset(const std::filesystem::path& dataset_path,
                     const std::filesystem::path& bin_path) {
     if (!std::filesystem::exists(bin_path)) {

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <unordered_set>
 #include <vector>
 
 namespace ipb {
@@ -37,7 +38,7 @@ cv::Mat naive_kMeans(const std::vector<cv::Mat> &descriptors, int k, int max_ite
     int total_descriptors =
             std::accumulate(descriptors.begin(), descriptors.end(), 0,
                             [](int sum, const cv::Mat &desc) { return sum + desc.rows; });
-    std::cout << "Total descriptors: " << total_descriptors << std::endl;
+    // std::cout << "Total descriptors: " << total_descriptors << std::endl;
     int descriptor_dim = descriptors[0].cols;
     cv::Mat concatenated_descriptors(total_descriptors, descriptor_dim, CV_32F);
     int offset = 0;
@@ -45,18 +46,27 @@ cv::Mat naive_kMeans(const std::vector<cv::Mat> &descriptors, int k, int max_ite
         desc.copyTo(concatenated_descriptors.rowRange(offset, offset + desc.rows));
         offset += desc.rows;
     }
-    std::cout << "Concatenated descriptors: " << concatenated_descriptors.size << std::endl;
+    // std::cout << "Concatenated descriptors: " << concatenated_descriptors.size << std::endl;
 
     // Randomly initialize means
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
     std::uniform_int_distribution<int> indices(0, concatenated_descriptors.rows - 1);
+    std::vector<int> unique_indices;
+    std::unordered_set<int> seen_indices;
+    while (static_cast<int>(unique_indices.size()) < k) {
+        int index = indices(random_number_generator);
+        if (seen_indices.find(index) == seen_indices.end()) {
+            unique_indices.push_back(index);
+            seen_indices.insert(index);
+        }
+    }
     cv::Mat means(k, descriptor_dim, CV_32F);
     for (int i = 0; i < k; ++i) {
-        int index = indices(random_number_generator);
+        int index = unique_indices[i];
         concatenated_descriptors.row(index).copyTo(means.row(i));
     }
-    std::cout << "Initial means: " << means.size << "\n" << std::endl;
+    // std::cout << "Initial means: " << means.size << std::endl;
 
     // Iterations
     for (int iter = 0; iter < max_iter; ++iter) {
@@ -71,21 +81,21 @@ cv::Mat naive_kMeans(const std::vector<cv::Mat> &descriptors, int k, int max_ite
             cluster_indices[minLoc.x].push_back(i);
         }
 
-        // check if there are no empty clusters, otherwise it will crash
+        // Check for empty clusters
         for (int i = 0; i < k; ++i) {
             if (cluster_indices[i].empty()) {
-                std::cerr << "Empty cluster " << i << " detected, reinitializing means"
+                std::cerr << "Empty cluster " << i << " detected. Reinitializing means..."
                           << std::endl;
-                std::cerr << "Naive clustering failed" << std::endl;
-                std::cerr << "Reinitialze kmeans with less clusters" << std::endl;
+                std::cerr << "Try decreasing the number of clusters..." << std::endl;
             }
         }
 
         // Compute new means
         cv::Mat new_means(k, descriptor_dim, CV_32F);
         for (int i = 0; i < k; ++i) {
-            cv::Mat cluster_descriptors(cluster_indices[i].size(), descriptor_dim, CV_32F);
-            for (size_t j = 0; j < cluster_indices[i].size(); ++j) {
+            cv::Mat cluster_descriptors(static_cast<int>(cluster_indices[i].size()), descriptor_dim,
+                                        CV_32F);
+            for (int j = 0; j < static_cast<int>(cluster_indices[i].size()); ++j) {
                 concatenated_descriptors.row(cluster_indices[i][j])
                         .copyTo(cluster_descriptors.row(j));
             }
@@ -94,7 +104,7 @@ cv::Mat naive_kMeans(const std::vector<cv::Mat> &descriptors, int k, int max_ite
 
         // Check convergence
         if (cv::norm(new_means, means) < 1e-8) {
-            std::cout << "Converged after " << iter << " iterations" << std::endl;
+            // std::cout << "Converged after " << iter << " iterations" << std::endl;
             return new_means;
         }
 

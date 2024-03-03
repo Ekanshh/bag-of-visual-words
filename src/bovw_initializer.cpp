@@ -16,7 +16,7 @@ void print_summary() {
     std::cout << "║   image2.png                                       ║" << std::endl;
     std::cout << "║   ...                                              ║" << std::endl;
     std::cout << "╟────────────────────────────────────────────────────╢" << std::endl;
-    std::cout << "║ The results are saved in the 'results/' directory. ║" << std::endl;
+    std::cout << "║ The results are saved in 'setup/' directory.       ║" << std::endl;
     std::cout << "╚════════════════════════════════════════════════════╝" << std::endl;
     std::cout << "\nPress Enter to begin..." << std::endl;
     std::cin.get();
@@ -51,7 +51,7 @@ int main() {
         return 1;
     }
 
-    const std::filesystem::path& result = "../results";
+    const std::filesystem::path& result = "../setup";
     const std::filesystem::path& bin_directory = result / "bin";
     const std::filesystem::path& histogram_directory = result / "histograms";
     const std::filesystem::path& tfidf_histogram_directory = result / "tfidf_histograms";

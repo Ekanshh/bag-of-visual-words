@@ -8,6 +8,21 @@
 
 #include "bovw.h"
 
+// Print the summary of the program
+void print_summary() {
+    std::cout << "╔════════════════════════════════════════════════════╗" << std::endl;
+    std::cout << "║              Bag of Visual Words Query             ║" << std::endl;
+    std::cout << "╟────────────────────────────────────────────────────╢" << std::endl;
+    std::cout << "║ This program allows you to query an image using    ║" << std::endl;
+    std::cout << "║ pre-computed bag of visual words. The query image  ║" << std::endl;
+    std::cout << "║ The query image can be an existing image in        ║" << std::endl;
+    std::cout << "║ database or a new image in `query/images` directory║" << std::endl;
+    std::cout << "╟────────────────────────────────────────────────────╢" << std::endl;
+    std::cout << "║ The results are saved in the 'query/' directory.   ║" << std::endl;
+    std::cout << "╚════════════════════════════════════════════════════╝" << std::endl;
+    std::cout << "\nPress Enter to begin..." << std::endl;
+    std::cin.get();
+}
 // Function to find the indices of the top N smallest values in a given distance matrix
 std::vector<int> find_top_n_indices(const cv::Mat& distance_matrix, int n) {
     std::vector<int> indices(distance_matrix.cols);
@@ -47,7 +62,7 @@ void generate_html_with_top_similar_images(
         auto image_name = similar_image.first;
         auto score = similar_image.second;
 
-        std::filesystem::path relative_path = "../images/";
+        std::filesystem::path relative_path = "../dataset/images/";
         const std::filesystem::path& image_path = relative_path / image_name;
 
         scored_images.emplace_back(image_path.string(), score);
@@ -69,16 +84,50 @@ void generate_html_with_top_similar_images(
                                                  html_filename);
 }
 
+// create query directory
+void create_query_directory(const std::filesystem::path& query_path) {
+    if (!std::filesystem::exists(query_path)) {
+        std::filesystem::create_directory(query_path);
+    }
+}
+
 int main() {
-    const std::filesystem::path& root = "../results/";
-    // const std::filesystem::path& image_directory = root / "images";
-    // const std::filesystem::path& bin_directory = root / "bin";
+    print_summary();
+
+    const std::filesystem::path& root = "../setup/";
     const std::filesystem::path& histogram_directory = root / "histograms";
     const std::filesystem::path& tfidf_histogram_directory = root / "tfidf_histograms";
     const std::filesystem::path& dictionary_path = root / "dictionary.yml";
-    const std::filesystem::path& query_path = "../dataset/query";
+    const std::filesystem::path& query_root = "../query";
+    create_query_directory(query_root);
 
-    // Pre-process pre-computed histograms
+    // User prompt
+    std::cout << "Do you want to query from an existing database or provide a new image "
+                 "(../query/images/<query_image_name>.png)?"
+              << std::endl;
+    std::cout << "1. Query from existing database" << std::endl;
+    std::cout << "2. Provide a new image (../query/images/<query_image_name>.png)" << std::endl;
+    std::cout << "Enter your choice (1 or 2): ";
+    int choice;
+    std::cin >> choice;
+    std::filesystem::path query_path;
+    if (choice == 1) {
+        query_path = "../dataset/images";
+        std::cout << "Enter the name of the query image (e.g. 0001.png): ";
+    } else if (choice == 2) {
+        query_path = query_root / "images";
+        std::cout << "Enter the name of the query image (e.g. query_image.png): ";
+    } else {
+        std::cerr << "Invalid choice. Exiting..." << std::endl;
+        return 1;
+    }
+    std::string query_image_name;
+    std::cin >> query_image_name;
+
+    // Complete query image path
+    std::filesystem::path query_image_path(query_path / (query_image_name));
+    std::string query_stem = query_image_path.stem().string();
+
     // Load all histograms from disk
     std::vector<ipb::Histogram> histograms;
     std::vector<std::string> histogram_filenames;
@@ -89,6 +138,7 @@ int main() {
             histogram_filenames.push_back(histogram_path.stem().string());
         }
     }
+
     // Load all tfidf histograms from disk
     std::vector<ipb::TFIDFHistogram> tfidf_histograms;
     std::vector<std::string> tfidf_histogram_filenames;
@@ -101,33 +151,23 @@ int main() {
         }
     }
 
-    // Ask the user to select a query image
-    std::cout << "Provide a query image name with extension (stored in /dataset/query.png):"
-              << std::endl;
-    std::string query_image_name;
-    std::cin >> query_image_name;
-
-    // Convert the query image path to a std::filesystem::path
-    std::filesystem::path query_image_path(query_path / (query_image_name));
-    std::string query_stem = query_image_path.stem().string();
-
     // Load the dictionary
     ipb::BowDictionary& dictionary = ipb::BowDictionary::GetInstance();
     dictionary.load(dictionary_path.string());
 
     // Compute the descriptors for the query image
-    ipb::serialization::sifts::ConvertDataset(query_path / "image", query_path / "bin");
+    ipb::serialization::sifts::ConvertSingleImage(query_image_path, query_root / "bin");
     // Load descriptors from disk
     cv::Mat query_descriptors =
-            ipb::serialization::Deserialize(query_path / "bin" / (query_stem + ".bin"));
+            ipb::serialization::Deserialize(query_root / "bin" / (query_stem + ".bin"));
     cv::imshow("Query Image Descriptors", query_descriptors);
     cv::waitKey(0);
 
     // Query Histogram
     auto quer_hist = ipb::Histogram(query_descriptors, dictionary);
-    quer_hist.WriteToCSV(query_path / (query_stem + ".csv"));
+    quer_hist.WriteToCSV(query_root / (query_stem + ".csv"));
     auto tfidf_quer_hist = ipb::QueryTFIDF(quer_hist, histograms);
-    tfidf_quer_hist.WriteToCSV(query_path / (query_stem + "_tfidf.csv"));
+    tfidf_quer_hist.WriteToCSV(query_root / (query_stem + "_tfidf.csv"));
 
     // Similarity Metrics
     cv::Mat histogram_query_cosdist = ipb::metrics::BatchCosineDistance(quer_hist, histograms);
@@ -137,15 +177,6 @@ int main() {
             ipb::metrics::BatchEuclideanDistance(quer_hist, histograms);
     cv::Mat tfidf_histogram_query_euclidean_distance =
             ipb::metrics::BatchEuclideanDistance(tfidf_quer_hist, tfidf_histograms);
-
-    // Visualize the metrics
-    // ipb::metrics::VisualizeMetrics(histogram_query_cosdist, "Histogram Cosine Distance");
-    // ipb::metrics::VisualizeMetrics(tfidf_histogram_query_cosdist, "TF-IDF Cosine Distance");
-    // ipb::metrics::VisualizeMetrics(histogram_query_euclidean_distance,
-    //                                "Histogram Euclidean Distance");
-    // ipb::metrics::VisualizeMetrics(tfidf_histogram_query_euclidean_distance,
-    //                                "TF-IDF Euclidean Distance");
-    // cv::waitKey(0);
 
     // Select top 10 similar images based on cosine distance for histogram query
     auto top_similar_images_histogram_cosine =
@@ -164,13 +195,15 @@ int main() {
             tfidf_histogram_query_euclidean_distance, tfidf_histogram_filenames, 10);
 
     // Generate HTML files for top similar images based on different similarity metrics
-    generate_html_with_top_similar_images(top_similar_images_histogram_cosine, query_path,
+    generate_html_with_top_similar_images(top_similar_images_histogram_cosine, query_root,
                                           "histogram_cosine");
-    generate_html_with_top_similar_images(top_similar_images_tfidf_cosine, query_path,
+    generate_html_with_top_similar_images(top_similar_images_tfidf_cosine, query_root,
                                           "tfidf_cosine");
-    generate_html_with_top_similar_images(top_similar_images_histogram_euclidean, query_path,
+    generate_html_with_top_similar_images(top_similar_images_histogram_euclidean, query_root,
                                           "histogram_euclidean");
-    generate_html_with_top_similar_images(top_similar_images_tfidf_euclidean, query_path,
+    generate_html_with_top_similar_images(top_similar_images_tfidf_euclidean, query_root,
                                           "tfidf_euclidean");
+
+    std::cout << "Results saved in the 'query/' directory." << std::endl;
     return 0;
 }
