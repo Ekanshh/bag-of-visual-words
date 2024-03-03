@@ -9,46 +9,71 @@ The project directory structure is organized as follows:
 ```
 .
 ├── api
-│   ├── html_writer.cpp
-│   ├── html_writer.hpp
-│   ├── image_browser.cpp
-│   └── image_browser.hpp
+│   ├── CMakeLists.txt
+│   ├── html_writer.cpp
+│   ├── html_writer.hpp
+│   ├── image_browser.cpp
+│   └── image_browser.hpp
 ├── bin
-│   ├── main
-│   └── query
+│   ├── bovw_initializer
+│   └── bovw_query
 ├── build
+│   ├── api
+│   ├── CMakeCache.txt
+│   ├── CMakeFiles
+│   ├── cmake_install.cmake
+│   ├── compile_commands.json
+│   ├── core
+│   ├── interface
+│   ├── Makefile
+│   └── src
+├── cmake
+│   ├── ClangFormat.cmake
+│   ├── StaticAnalyzers.cmake
+│   └── TestCoverage.cmake
+├── CMakeLists.txt
 ├── core
-│   ├── bow_dictionary.cpp
-│   ├── bow_dictionary.hpp
-│   ├── convert_dataset.cpp
-│   ├── convert_dataset.hpp
-│   ├── histogram.cpp
-│   ├── histogram.hpp
-│   ├── metrics.cpp
-│   ├── metrics.hpp
-│   ├── mykmeans.cpp
-│   ├── mykmeans.hpp
-│   ├── serialize.cpp
-│   └── serialize.hpp
-├── dataset
-│   ├── images
-│   └── query
+│   ├── bow_dictionary.cpp
+│   ├── bow_dictionary.hpp
+│   ├── CMakeLists.txt
+│   ├── convert_dataset.cpp
+│   ├── convert_dataset.hpp
+│   ├── histogram.cpp
+│   ├── histogram.hpp
+│   ├── metrics.cpp
+│   ├── metrics.hpp
+│   ├── serialize.cpp
+│   └── serialize.hpp
+├── *dataset*
+│   └── images
 ├── interface
-│   └── bovw.h
+│   ├── bovw.h
+│   └── CMakeLists.txt
+├── *query*
+│   ├── images
+├── README.md
+├── *setup*
+│   ├── bin
+│   ├── dictionary.yml
+│   ├── histograms
+│   ├── metric_histogram_cosdist.csv
+│   ├── metric_tfidf_histogram_cosdist.csv
+│   └── tfidf_histograms
 └── src
-    ├── main.cpp
-    └── query.cpp
+    ├── bovw_initializer.cpp
+    ├── bovw_query.cpp
+    └── CMakeLists.txt
 ```
 
 ### Usage
 
-1. **Dataset Directory**: Store the image dataset in the `dataset/images` directory. Place query images in the `dataset/query` directory.
+1. **Dataset Directory**: Store the image dataset in the `dataset/images` directory. You need to provide this in correct directory structure as mentioned above.
 
-2. **Building the Project**: Build the project using the provided CMakeLists.txt file. Navigate to the build directory and execute:
+2. **Building the Project**: Build the project using the provided CMakeLists.txt file
 
    ```bash
-   cmake ..
-   make
+   cmake -B build
+   make -C build
    ```
 
 3. **Executing the Query**: After building the project, navigate to the `bin` directory:
@@ -57,19 +82,23 @@ The project directory structure is organized as follows:
    cd bin
    ```
 
-   Run the query executable:
+   You can either setup the bovw pipeline again by running:
 
    ```bash
-   ./query
+   ./bovw_initializer.cpp
    ```
 
-   Follow the prompts to enter the name of the query image file.
+   or use pre-computed bovw using the resources in `setup` directory and directly running:
 
-4. **Viewing Results**: The results of the image queries will be stored in the `dataset/query` directory.
+   ```bash
+   ./bovw_query.cpp
+   ```
+
+4. **Viewing Results**: The results of the query will be stored in the `query` directory. It will be overwritten everytime you run a query.
 
 ### Additional Notes
 
 - The `api` directory contains HTML writer and image browser functionalities for generating HTML files to view the query results.
 - The `core` directory contains the core functionalities of the BOVW algorithm, including building the dictionary, converting datasets, computing histograms, and performing metrics calculations.
 - The `interface` directory contains the interface definition file `bovw.h`.
-- The `src` directory contains the main and query source files.
+- The `src` directory contains the setup and query source files.
