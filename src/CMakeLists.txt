@@ -1,20 +1,13 @@
-# 
-add_executable(main main.cpp)
-set_target_properties(main PROPERTIES
+# bovw_initializer
+add_executable(bovw_initializer bovw_initializer.cpp)
+set_target_properties(bovw_initializer PROPERTIES
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-target_link_libraries(main bovw)
+target_link_libraries(bovw_initializer bovw)
 
-# 
-add_executable(query query.cpp)
-set_target_properties(query PROPERTIES
+# bovw_query
+add_executable(bovw_query bovw_query.cpp)
+set_target_properties(bovw_query PROPERTIES
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
-target_link_libraries(query bovw)
-
-# 
-add_executable(compute_metrics compute_metrics.cpp)
-set_target_properties(compute_metrics PROPERTIES
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-target_link_libraries(compute_metrics bovw)
+target_link_libraries(bovw_query bovw)

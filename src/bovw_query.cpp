@@ -11,9 +11,8 @@
 // Function to find the indices of the top N smallest values in a given distance matrix
 std::vector<int> find_top_n_indices(const cv::Mat& distance_matrix, int n) {
     std::vector<int> indices(distance_matrix.cols);
-    std::iota(indices.begin(), indices.end(), 0);  // Fill indices with 0, 1, 2, ..., N-1
+    std::iota(indices.begin(), indices.end(), 0);
 
-    // Sort the indices based on the values in the distance matrix
     std::partial_sort(
             indices.begin(), indices.begin() + n, indices.end(), [&distance_matrix](int a, int b) {
                 return distance_matrix.at<double>(0, a) < distance_matrix.at<double>(0, b);
@@ -28,26 +27,29 @@ std::vector<int> find_top_n_indices(const cv::Mat& distance_matrix, int n) {
 std::vector<std::pair<std::string, double>> select_top_n_similar_images(
         const cv::Mat& distance_matrix, const std::vector<std::string>& filenames, int n) {
     std::vector<int> top_indices = find_top_n_indices(distance_matrix, n);
-
-    // Collect the filenames and corresponding distances for the top N similar images
     std::vector<std::pair<std::string, double>> top_similar_images;
-    for (int index : top_indices) {
-        top_similar_images.emplace_back(filenames[index] + ".png",
-                                        distance_matrix.at<double>(0, index));
-    }
-
+    std::transform(top_indices.begin(), top_indices.end(), std::back_inserter(top_similar_images),
+                   [&](int index) {
+                       return std::make_pair(filenames[index] + ".png",
+                                             distance_matrix.at<double>(0, index));
+                   });
     return top_similar_images;
 }
 
+// Generate an HTML file with the top similar images
 void generate_html_with_top_similar_images(
         const std::vector<std::pair<std::string, double>>& top_similar_images,
         const std::filesystem::path& query_path,
         const std::string& metric_name) {
-    // Get scored images
+    // Convert the top similar images to the format required by the image browser
     std::vector<bovw::api::image_browser::ScoredImage> scored_images;
-    for (const auto& [image_name, score] : top_similar_images) {
+    for (const auto& similar_image : top_similar_images) {
+        auto image_name = similar_image.first;
+        auto score = similar_image.second;
+
         std::filesystem::path relative_path = "../images/";
         const std::filesystem::path& image_path = relative_path / image_name;
+
         scored_images.emplace_back(image_path.string(), score);
     }
 
@@ -68,13 +70,13 @@ void generate_html_with_top_similar_images(
 }
 
 int main() {
-    const std::filesystem::path& root = "../dataset/";
-    const std::filesystem::path& image_directory = root / "images";
-    const std::filesystem::path& bin_directory = root / "bin";
+    const std::filesystem::path& root = "../results/";
+    // const std::filesystem::path& image_directory = root / "images";
+    // const std::filesystem::path& bin_directory = root / "bin";
     const std::filesystem::path& histogram_directory = root / "histograms";
     const std::filesystem::path& tfidf_histogram_directory = root / "tfidf_histograms";
     const std::filesystem::path& dictionary_path = root / "dictionary.yml";
-    const std::filesystem::path& query_path = root / "query";
+    const std::filesystem::path& query_path = "../dataset/query";
 
     // Pre-process pre-computed histograms
     // Load all histograms from disk
@@ -114,7 +116,7 @@ int main() {
     dictionary.load(dictionary_path.string());
 
     // Compute the descriptors for the query image
-    ipb::serialization::sifts::ConvertDataset(query_path / "image");
+    ipb::serialization::sifts::ConvertDataset(query_path / "image", query_path / "bin");
     // Load descriptors from disk
     cv::Mat query_descriptors =
             ipb::serialization::Deserialize(query_path / "bin" / (query_stem + ".bin"));
