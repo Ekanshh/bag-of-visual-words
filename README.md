@@ -82,16 +82,16 @@ The project directory structure is organized as follows:
    cd bin
    ```
 
-   You can either setup the bovw pipeline again by running:
+   You can either setup the bovw pipeline again by running (This will recompute setup resouces such as dictionary, histograms, etc. and will take some time):
 
    ```bash
-   ./bovw_initializer.cpp
+   ./bovw_initializer
    ```
 
    or use pre-computed bovw using the resources in `setup` directory and directly running:
 
    ```bash
-   ./bovw_query.cpp
+   ./bovw_query
    ```
 
 4. **Viewing Results**: The results of the query will be stored in the `query` directory. It will be overwritten everytime you run a query.
