@@ -1,6 +1,6 @@
 ## Bag of Visual Words (BOVW) C++ Project
 
-This C++ project implements the Bag of Visual Words (BOVW) algorithm for image retrieval. The project allows you to build a BOVW model using a dataset of images, and then perform image queries to retrieve similar images from the dataset.
+This C++ project is part of the coursework for the Modern C++ for Computer Vision course. It implements the Bag of Visual Words (BOVW) algorithm for image retrieval. The project enables the construction of a BOVW model using a dataset of images and allows users to perform image queries to retrieve similar images from the dataset.
 
 ### Project Structure
 
